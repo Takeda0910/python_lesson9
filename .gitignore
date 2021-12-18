@@ -145,3 +145,4 @@ cython_debug/
 #.idea/
 
 run.py
+json_study.py

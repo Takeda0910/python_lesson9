@@ -3,6 +3,7 @@ import requests
 import time
 import schedule
 import datetime
+import json
 
 from twitter import *
 
@@ -11,37 +12,57 @@ HEADERS = {"Accept": "*/*",
            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36}"}
     
 
-res = requests.get(url, headers=HEADERS)
-soup = BeautifulSoup(res.text, "html.parser")
+class AmazonScraping():
+    
+    def __init__(self):
+        res = requests.get(url, headers=HEADERS)
+        self.soup = BeautifulSoup(res.text, "html.parser")
+        
+        self.stock_dict = {}
+        self.stock_dict["B08KJ85RJ5"] = "在庫あり"
+        self.json_string = json.dumps(self.stock_dict, ensure_ascii=False)
+        
+        with open("stock.json", "w") as f:
+            f.write(self.json_string)
+            print(f"init_write: {self.json_string}")
+        
 
-def do_task():
-    count = 0
-    while True:
+    def do_task(self):
         print(datetime.datetime.now())
-        to_cart_button = str(soup.select("#add-to-cart-button")) # カートに入れるボタン
-        print(to_cart_button)
-        time.sleep(3)
+        try:
+            to_cart_button = str(self.soup.select("#add-to-cart-button")) # カートに入れるボタン要素取得
+            print(to_cart_button)
+            time.sleep(3)
+        
+            if to_cart_button:                        # ボタンが存在すれば                     
+                with open("stock.json", "r") as f:
+                    self.stock_dict = json.loads(f.read())
+                    print(f"read: {self.stock_dict}")
+                    
+                    if self.stock_dict == {"B08KJ85RJ5": "在庫あり"}:
+                        print("在庫有りから変化なし")    # 変化なし
+                    else:
+                        print(f"在庫有り")
+                        yes_stock_status()          # Twitterに在庫有りツイート
+                        
+            else:                                     # ボタンが存在しなければ
+                with open("stock.json", "w") as f:
+                    self.json_string = ""
+                    f.write(self.json_string)
+                    print(f"else_write: {self.json_string}")
+                    print("在庫無し")
+                    nothing_stock_status()           # Twitterに在庫無しツイート
+        except:
+            None    
+                                    
 
-        if to_cart_button and count == 0:    # Twitterに在庫有りツイート
-            yes_stock_status()             
-            print("在庫有り")
-            count+=1
-        elif to_cart_button and count >= 1:  # 在庫有りから変化なし
-            print("pass")
-            pass    
-        else:
-            nothing_stock_status()           # Twitterに在庫無しツイート
-            print("在庫無し")               
-            count = 0
+    def main(self):
+        schedule.every(3).hours.do(self.do_task)
+        while True:
+            schedule.run_pending()
+            time.sleep(1)
 
-
-def main():
-    schedule.every(3).hours.do(do_task)
-
-    while True:
-        schedule.run_pending()
-        time.sleep(1)
-
+amazon = AmazonScraping()
 
 if __name__ == "__main__":
-    main()
+    amazon.main()
