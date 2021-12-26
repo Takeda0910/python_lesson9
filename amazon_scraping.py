@@ -15,11 +15,12 @@ HEADERS = {"Accept": "*/*",
 class AmazonScraping():
     
     def __init__(self):
+        pass
+        
+    def json_file_write(self):   
         res = requests.get(url, headers=HEADERS)
         self.soup = BeautifulSoup(res.text, "html.parser")
         
-        
-    def json_file_write(self):   
         self.stock_dict = {}
         self.stock_dict["B08KJ85RJ5"] = "在庫あり"
         self.json_string = json.dumps(self.stock_dict, ensure_ascii=False)
@@ -44,8 +45,8 @@ class AmazonScraping():
                     if self.stock_dict == {"B08KJ85RJ5": "在庫あり"}:
                         print("在庫有りから変化なし")    # 変化なし
                     else:
-                        yes_stock_status()          # Twitterに在庫有りツイート
                         print(f"在庫有り")
+                        yes_stock_status()          # Twitterに在庫有りツイート
                         
             else:                                     # ボタンが存在しなければ
                 with open("stock.json", "w") as f:
