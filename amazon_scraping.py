@@ -18,13 +18,15 @@ class AmazonScraping():
         res = requests.get(url, headers=HEADERS)
         self.soup = BeautifulSoup(res.text, "html.parser")
         
+        
+    def json_file_write(self):   
         self.stock_dict = {}
         self.stock_dict["B08KJ85RJ5"] = "在庫あり"
         self.json_string = json.dumps(self.stock_dict, ensure_ascii=False)
         
         with open("stock.json", "w") as f:
             f.write(self.json_string)
-            print(f"init_write: {self.json_string}")
+            print(f"json_write: {self.json_string}")
         
 
     def do_task(self):
@@ -42,8 +44,8 @@ class AmazonScraping():
                     if self.stock_dict == {"B08KJ85RJ5": "在庫あり"}:
                         print("在庫有りから変化なし")    # 変化なし
                     else:
-                        print(f"在庫有り")
                         yes_stock_status()          # Twitterに在庫有りツイート
+                        print(f"在庫有り")
                         
             else:                                     # ボタンが存在しなければ
                 with open("stock.json", "w") as f:
@@ -56,13 +58,15 @@ class AmazonScraping():
             None    
                                     
 
-    def main(self):
-        schedule.every(3).hours.do(self.do_task)
-        while True:
-            schedule.run_pending()
-            time.sleep(1)
+    
+def main():
+    amazon = AmazonScraping()
+    amazon.json_file_write()
+    schedule.every(5).hours.do(amazon.do_task)
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
 
-amazon = AmazonScraping()
 
 if __name__ == "__main__":
-    amazon.main()
+    main()
